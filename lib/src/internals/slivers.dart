@@ -186,7 +186,7 @@ class RenderSliverRefresh extends RenderSliverSingleBoxAdapter {
   void performLayout() {
     if (_updateFlag) {
       // ignore: INVALID_USE_OF_PROTECTED_MEMBER
-      Scrollable.of(context).position.applyNewDimensions();
+      Scrollable.of(context).position.activity.applyNewDimensions();
       _updateFlag = false;
     }
     // The new layout extent this sliver should now have.

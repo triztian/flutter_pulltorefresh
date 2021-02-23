@@ -1,7 +1,4 @@
 # flutter_pulltorefresh
-<a href="https://pub.dev/packages/pull_to_refresh">
-  <img src="https://img.shields.io/pub/v/pull_to_refresh.svg"/>
-</a>
 <a href="https://flutter.dev/">
   <img src="https://img.shields.io/badge/flutter-%3E%3D%201.2.1-green.svg"/>
 </a>
@@ -9,8 +6,14 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg"/>
 </a>
 
-## Intro
-a widget provided to the flutter scroll component drop-down refresh and pull up load.support android and ios.
+## Overview
+
+> *DISCLAIMER:* 
+> This is a patched fork on 1.6.1 that fixes the slivers issue patched in 1.6.2
+> The original repository can be found here:
+>   * https://github.com/peng8350/flutter_pulltorefresh
+
+A widget provided to the flutter scroll component drop-down refresh and pull up load.support android and ios.
 If you are Chinese,click here([中文文档](https://github.com/peng8350/flutter_pulltorefresh/blob/master/README_CN.md))
 
 [Download Demo(Android)](demo.apk):
@@ -18,114 +21,115 @@ If you are Chinese,click here([中文文档](https://github.com/peng8350/flutter
 ![qrCode](arts/qr_code.png)
 
 ## Features
-* pull up load and pull down refresh
-* It's almost fit for all Scroll witgets,like GridView,ListView...
-* provide global setting of default indicator and property
-* provide some most common indicators
+
+* Pull-up and Pull-down swipe actions to refresh
+* Works with most scrolling widgets: GridView, ListView, etc.
+* Provide global setting of default indicator and property
+* Provide some most common indicators
 * Support Android and iOS default ScrollPhysics,the overScroll distance can be controlled,custom spring animate,damping,speed.
-* horizontal and vertical refresh,support reverse ScrollView also(four direction)
-* provide more refreshStyle: Behind,Follow,UnFollow,Front,provide more loadmore style
+* Horizontal and vertical refresh,support reverse ScrollView also(four direction)
+* Provide more refreshStyle: Behind,Follow,UnFollow,Front,provide more loadmore style
 * Support twoLevel refresh,implments just like TaoBao twoLevel,Wechat TwoLevel
-* enable link indicator which placing other place,just like Wechat FriendCircle refresh effect
+* Enable link indicator which placing other place,just like Wechat FriendCircle refresh effect
 
 ## Usage
 
-add this line to pubspec.yaml
+Add this line to pubspec.yaml
 
 ```yaml
-
-   dependencies:
-     pull_to_refresh: ^1.6.1
-
+dependencies:
+  pull_to_refresh: ^1.6.5
 ```
 
 import package
 
 ```dart
+import 'package:pull_to_refresh/pull_to_refresh.dart';
+```
 
-    import 'package:pull_to_refresh/pull_to_refresh.dart';
+Sample usage:
+
+ ***It must be noted here that ListView must be the child of SmartRefresher and cannot be separated from it. For detailed reasons, see <a href="child">here</a>***
+
+```dart
+List<String> items = ["1", "2", "3", "4", "5", "6", "7", "8"];
+RefreshController _refreshController =
+    RefreshController(initialRefresh: false);
+
+void _onRefresh() async{
+  // monitor network fetch
+  await Future.delayed(Duration(milliseconds: 1000));
+  // if failed,use refreshFailed()
+  _refreshController.refreshCompleted();
+}
+
+void _onLoading() async{
+  // monitor network fetch
+  await Future.delayed(Duration(milliseconds: 1000));
+  // if failed,use loadFailed(),if no data return,use LoadNodata()
+  items.add((items.length+1).toString());
+  if(mounted)
+  setState(() {
+
+  });
+  _refreshController.loadComplete();
+}
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: SmartRefresher(
+      enablePullDown: true,
+      enablePullUp: true,
+      header: WaterDropHeader(),
+      footer: CustomFooter(
+        builder: (BuildContext context,LoadStatus mode){
+          Widget body ;
+          if(mode==LoadStatus.idle){
+            body =  Text("pull up load");
+          }
+          else if(mode==LoadStatus.loading){
+            body =  CupertinoActivityIndicator();
+          }
+          else if(mode == LoadStatus.failed){
+            body = Text("Load Failed!Click retry!");
+          }
+          else if(mode == LoadStatus.canLoading){
+              body = Text("release to load more");
+          }
+          else{
+            body = Text("No more Data");
+          }
+          return Container(
+            height: 55.0,
+            child: Center(child:body),
+          );
+        },
+      ),
+      controller: _refreshController,
+      onRefresh: _onRefresh,
+      onLoading: _onLoading,
+      child: ListView.builder(
+        itemBuilder: (c, i) => Card(child: Center(child: Text(items[i]))),
+        itemExtent: 100.0,
+        itemCount: items.length,
+      ),
+    ),
+  );
+}
 
 ```
 
-simple example,***It must be noted here that ListView must be the child of SmartRefresher and cannot be separated from it. For detailed reasons, see <a href="child">here</a>***
+#### Note
+
+Since 1.5 it is not necessary to override `dispose`:
 
 ```dart
-
-
-  List<String> items = ["1", "2", "3", "4", "5", "6", "7", "8"];
-  RefreshController _refreshController =
-      RefreshController(initialRefresh: false);
-
-  void _onRefresh() async{
-    // monitor network fetch
-    await Future.delayed(Duration(milliseconds: 1000));
-    // if failed,use refreshFailed()
-    _refreshController.refreshCompleted();
-  }
-
-  void _onLoading() async{
-    // monitor network fetch
-    await Future.delayed(Duration(milliseconds: 1000));
-    // if failed,use loadFailed(),if no data return,use LoadNodata()
-    items.add((items.length+1).toString());
-    if(mounted)
-    setState(() {
-
-    });
-    _refreshController.loadComplete();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SmartRefresher(
-        enablePullDown: true,
-        enablePullUp: true,
-        header: WaterDropHeader(),
-        footer: CustomFooter(
-          builder: (BuildContext context,LoadStatus mode){
-            Widget body ;
-            if(mode==LoadStatus.idle){
-              body =  Text("pull up load");
-            }
-            else if(mode==LoadStatus.loading){
-              body =  CupertinoActivityIndicator();
-            }
-            else if(mode == LoadStatus.failed){
-              body = Text("Load Failed!Click retry!");
-            }
-            else if(mode == LoadStatus.canLoading){
-                body = Text("release to load more");
-            }
-            else{
-              body = Text("No more Data");
-            }
-            return Container(
-              height: 55.0,
-              child: Center(child:body),
-            );
-          },
-        ),
-        controller: _refreshController,
-        onRefresh: _onRefresh,
-        onLoading: _onLoading,
-        child: ListView.builder(
-          itemBuilder: (c, i) => Card(child: Center(child: Text(items[i]))),
-          itemExtent: 100.0,
-          itemCount: items.length,
-        ),
-      ),
-    );
-  }
-
-  // from 1.5.0, it is not necessary to add this line
-  //@override
- // void dispose() {
-    // TODO: implement dispose
-  //  _refreshController.dispose();
-  //  super.dispose();
- // }
-
+@override
+void dispose() {
+  super.dispose();
+  _refreshController.dispose();
+}
 ```
 
 The global configuration RefreshConfiguration, which configures all Smart Refresher representations under the subtree, is generally stored at the root of MaterialApp and is similar in usage to ScrollConfiguration.
@@ -133,47 +137,44 @@ In addition, if one of your SmartRefresher behaves differently from the rest of 
 attributes that are not empty.
 
 ```dart
-    // Smart Refresher under the global configuration subtree, here are a few particularly important attributes
-     RefreshConfiguration(
-         headerBuilder: () => WaterDropHeader(),        // Configure the default header indicator. If you have the same header indicator for each page, you need to set this
-         footerBuilder:  () => ClassicFooter(),        // Configure default bottom indicator
-         headerTriggerDistance: 80.0,        // header trigger refresh trigger distance
-         springDescription:SpringDescription(stiffness: 170, damping: 16, mass: 1.9),         // custom spring back animate,the props meaning see the flutter api
-         maxOverScrollExtent :100, //The maximum dragging range of the head. Set this property if a rush out of the view area occurs
-         maxUnderScrollExtent:0, // Maximum dragging range at the bottom
-         enableScrollWhenRefreshCompleted: true, //This property is incompatible with PageView and TabBarView. If you need TabBarView to slide left and right, you need to set it to true.
-         enableLoadingWhenFailed : true, //In the case of load failure, users can still trigger more loads by gesture pull-up.
-         hideFooterWhenNotFull: false, // Disable pull-up to load more functionality when Viewport is less than one screen
-         enableBallisticLoad: true, // trigger load more by BallisticScrollActivity
-        child: MaterialApp(
-            ........
-        )
-    );
-
+// Smart Refresher under the global configuration subtree, here are a few particularly important attributes
+  RefreshConfiguration(
+      headerBuilder: () => WaterDropHeader(),        // Configure the default header indicator. If you have the same header indicator for each page, you need to set this
+      footerBuilder:  () => ClassicFooter(),        // Configure default bottom indicator
+      headerTriggerDistance: 80.0,        // header trigger refresh trigger distance
+      springDescription:SpringDescription(stiffness: 170, damping: 16, mass: 1.9),         // custom spring back animate,the props meaning see the flutter api
+      maxOverScrollExtent :100, //The maximum dragging range of the head. Set this property if a rush out of the view area occurs
+      maxUnderScrollExtent:0, // Maximum dragging range at the bottom
+      enableScrollWhenRefreshCompleted: true, //This property is incompatible with PageView and TabBarView. If you need TabBarView to slide left and right, you need to set it to true.
+      enableLoadingWhenFailed : true, //In the case of load failure, users can still trigger more loads by gesture pull-up.
+      hideFooterWhenNotFull: false, // Disable pull-up to load more functionality when Viewport is less than one screen
+      enableBallisticLoad: true, // trigger load more by BallisticScrollActivity
+    child: MaterialApp(
+        ........
+    )
+);
 ```
 
 1.5.6 add new feather: localization ,you can add following code in MaterialApp or CupertinoApp:
 
 ```dart
-
-    MaterialApp(
-            localizationsDelegates: [
-              // this line is important
-              RefreshLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate
-            ],
-            supportedLocales: [
-              const Locale('en'),
-              const Locale('zh'),
-            ],
-            localeResolutionCallback:
-                (Locale locale, Iterable<Locale> supportedLocales) {
-              //print("change language");
-              return locale;
-            },
-    )
-
+MaterialApp(
+  localizationsDelegates: [
+    // this line is important
+    RefreshLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate
+  ],
+  supportedLocales: [
+    const Locale('en'),
+    const Locale('zh'),
+  ],
+  localeResolutionCallback:
+      (Locale locale, Iterable<Locale> supportedLocales) {
+    //print("change language");
+    return locale;
+  },
+)
 ```
 
 
